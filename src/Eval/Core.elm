@@ -13,8 +13,8 @@ import Json.Encode as Encode
 
 
 {-| Given the name of a function in the Elm Core library, return an equivalent
-function that takes one or more `Json` values as arguments (either as a single
-value, 2-tuple, or 3-tuple).
+function that takes one or more `Json` values as arguments and returns a `Json`
+value
 -}
 lib : String -> Result String Function
 lib expression =
@@ -66,6 +66,13 @@ basics fName =
       "Comparison functions like `(==)` or `(>)` can't be called throught this "
       ++ "interface because Elm doesn't support type inference from JavaScript "
       ++ "values."
+
+    noFunctionError =
+      "Functional operators like `(|>)` or `(>>)` can't be called throught "
+      ++ "interface because only primitive types, arrays, and objects are "
+      ++ "allowed as arguments. As an alternative, `elm-eval` function calls "
+      ++ "can be chained on the JavaScript side using promises with `.then` or "
+      ++ "`await`."
 
     typeError typeList =
       "Type error in arguments to `"
@@ -128,6 +135,182 @@ basics fName =
 
       "(==)" ->
         Err noCompareError
+
+      "(/=)" ->
+        Err noCompareError
+
+      "(<)" ->
+        Err noCompareError
+
+      "(>)" ->
+        Err noCompareError
+
+      "(<=)" ->
+        Err noCompareError
+
+      "(>=)" ->
+        Err noCompareError
+
+      "max" ->
+        Err noCompareError
+
+      "min" ->
+        Err noCompareError
+
+      "compare" ->
+        Err noCompareError
+
+      "not" ->
+        Wrap.a1 Basics.not Try.bool Encode.bool (typeError "[boolean]")
+          |> F1
+          |> Ok
+
+      "(&&)" ->
+        Wrap.a2 (&&) (Try.bool, Try.bool) Encode.bool (typeError "[boolean, boolean]")
+          |> F2
+          |> Ok
+
+      "(||)" ->
+        Wrap.a2 (||) (Try.bool, Try.bool) Encode.bool (typeError "[boolean, boolean]")
+          |> F2
+          |> Ok
+
+      "xor" ->
+        Wrap.a2 Basics.xor (Try.bool, Try.bool) Encode.bool (typeError "[boolean, boolean]")
+          |> F2
+          |> Ok
+
+      "(++)" ->
+        Err (
+          "The `(++)` function can't be called throught this interface because "
+          ++ "Elm doesn't support type inference from JavaScript values. "
+          ++ "Use `String.append` or `List.append` instead."
+        )
+
+      "modBy" ->
+        Wrap.a2 Basics.modBy (Try.int, Try.int) Encode.int (typeError "[integer, integer]")
+          |> F2
+          |> Ok
+
+      "remainderBy" ->
+        Wrap.a2 Basics.remainderBy (Try.int, Try.int) Encode.int (typeError "[integer, integer]")
+          |> F2
+          |> Ok
+
+      "negate" ->
+        Wrap.a1 Basics.negate Try.float Encode.float (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "abs" ->
+        Wrap.a1 Basics.abs Try.float Encode.float (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "clamp" ->
+        Wrap.a3 Basics.clamp (Try.float, Try.float, Try.float) Encode.float (typeError "[number, number, number]")
+          |> F3
+          |> Ok
+
+      "sqrt" ->
+        Wrap.a1 Basics.sqrt Try.float Encode.float (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "logBase" ->
+        Wrap.a2 Basics.logBase (Try.float, Try.float) Encode.float (typeError "[number, number]")
+          |> F2
+          |> Ok
+
+      "e" ->
+        Wrap.a0 (\() -> Basics.e) Encode.float
+          |> F0
+          |> Ok
+
+      "degrees" ->
+        Wrap.a2 Basics.degrees (Try.float, Try.float) Encode.float (typeError "[number, number]")
+          |> F2
+          |> Ok
+
+      "radians" ->
+        Wrap.a2 Basics.radians (Try.float, Try.float) Encode.float (typeError "[number, number]")
+          |> F2
+          |> Ok
+
+      "turns" ->
+        Wrap.a2 Basics.turns (Try.float, Try.float) Encode.float (typeError "[number, number]")
+          |> F2
+          |> Ok
+
+      "pi" ->
+        Wrap.a0 (\() -> Basics.pi) Encode.float
+          |> F0
+          |> Ok
+
+      "cos" ->
+        Wrap.a1 Basics.cos Try.float Encode.float (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "sin" ->
+        Wrap.a1 Basics.sin Try.float Encode.float (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "tan" ->
+        Wrap.a1 Basics.tan Try.float Encode.float (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "acos" ->
+        Wrap.a1 Basics.acos Try.float Encode.float (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "asin" ->
+        Wrap.a1 Basics.asin Try.float Encode.float (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "atan" ->
+        Wrap.a1 Basics.atan Try.float Encode.float (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "atan2" ->
+        Wrap.a2 Basics.atan2 (Try.float, Try.float) Encode.float (typeError "[number]")
+          |> F2
+          |> Ok
+
+      "toPolar" ->
+        Wrap.a2 (\a b -> Basics.toPolar (a,b)) (Try.float, Try.float) (\(a,b) -> Encode.list Encode.float [a,b]) (typeError "[number, number]")
+          |> F2
+          |> Ok
+
+      "fromPolar" ->
+        Wrap.a2 (\a b -> Basics.fromPolar (a,b)) (Try.float, Try.float) (\(a,b) -> Encode.list Encode.float [a,b]) (typeError "[number, number]")
+          |> F2
+          |> Ok
+
+      "isNaN" ->
+        Wrap.a1 Basics.isNaN Try.float Encode.bool (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "isInfinite" ->
+        Wrap.a1 Basics.isInfinite Try.float Encode.bool (typeError "[number]")
+          |> F1
+          |> Ok
+
+      "identity" ->
+        (\a -> Ok a)
+          |> F1
+          |> Ok
+
+      "always" ->
+        (\a _ -> Ok a)
+          |> F2
+          |> Ok
 
       _ ->
         Err notFoundError
