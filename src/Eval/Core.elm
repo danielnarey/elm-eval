@@ -44,8 +44,13 @@ lib expression =
     case moduleName of
       "Basics" ->
         basics fName
+
+      "List" ->
+        list fName
+
       "Dict" ->
         dict fName
+
       _ ->
         Err notFoundError
 
@@ -63,12 +68,12 @@ basics fName =
       ++ "the module name must be given first (example: `String.length`)."
 
     noCompareError =
-      "Comparison functions like `(==)` or `(>)` can't be called throught this "
+      "Comparison functions like `(==)` or `(>)` can't be called through this "
       ++ "interface because Elm doesn't support type inference from JavaScript "
       ++ "values."
 
     noFunctionError =
-      "Functional operators like `(|>)` or `(>>)` can't be called throught "
+      "Functional operators like `(|>)` or `(>>)` can't be called through this "
       ++ "interface because only primitive types, arrays, and objects are "
       ++ "allowed as arguments. As an alternative, `elm-eval` function calls "
       ++ "can be chained on the JavaScript side using promises with `.then` or "
@@ -228,18 +233,18 @@ basics fName =
           |> Ok
 
       "degrees" ->
-        Wrap.a2 Basics.degrees (Try.float, Try.float) Encode.float (typeError "[number, number]")
-          |> F2
+        Wrap.a1 Basics.degrees Try.float Encode.float (typeError "[number]")
+          |> F1
           |> Ok
 
       "radians" ->
-        Wrap.a2 Basics.radians (Try.float, Try.float) Encode.float (typeError "[number, number]")
-          |> F2
+        Wrap.a1 Basics.radians Try.float Encode.float (typeError "[number]")
+          |> F1
           |> Ok
 
       "turns" ->
-        Wrap.a2 Basics.turns (Try.float, Try.float) Encode.float (typeError "[number, number]")
-          |> F2
+        Wrap.a1 Basics.turns Try.float Encode.float (typeError "[number]")
+          |> F1
           |> Ok
 
       "pi" ->
@@ -283,12 +288,12 @@ basics fName =
           |> Ok
 
       "toPolar" ->
-        Wrap.a2 (\a b -> Basics.toPolar (a,b)) (Try.float, Try.float) (\(a,b) -> Encode.list Encode.float [a,b]) (typeError "[number, number]")
+        Wrap.a2 (\a b -> Basics.toPolar (a,b)) (Try.float, Try.float) (\(a,b) -> [a,b] |> Encode.list Encode.float) (typeError "[number, number]")
           |> F2
           |> Ok
 
       "fromPolar" ->
-        Wrap.a2 (\a b -> Basics.fromPolar (a,b)) (Try.float, Try.float) (\(a,b) -> Encode.list Encode.float [a,b]) (typeError "[number, number]")
+        Wrap.a2 (\a b -> Basics.fromPolar (a,b)) (Try.float, Try.float) (\(a,b) -> [a,b] |> Encode.list Encode.float) (typeError "[number, number]")
           |> F2
           |> Ok
 
@@ -308,9 +313,217 @@ basics fName =
           |> Ok
 
       "always" ->
-        (\a _ -> Ok a)
+        (\(a,_) -> Ok a)
           |> F2
           |> Ok
+
+      "(<|)" ->
+        Err noFunctionError
+
+      "(|>)" ->
+        Err noFunctionError
+
+      "(<<)" ->
+        Err noFunctionError
+
+      "(>>)" ->
+        Err noFunctionError
+
+      _ ->
+        Err notFoundError
+
+
+list : String -> Result String Function
+list fName =
+  let
+    notFoundError =
+      "Function `"
+      ++ fName
+      ++ "` was not found in the `List` core library."
+
+    noCompareError =
+      "Comparison functions like `member` or `any` can't be called through "
+      ++ "this interface because Elm doesn't support type inference from "
+      ++ "JavaScript values."
+
+    noFunctionError =
+      "Higher level functions like `(map)` or `(foldl)` can't be called "
+      ++ "through this interface because only primitive types, arrays, and "
+      ++ "objects are allowed as arguments. As an alternative, you can use "
+      ++ "`map` or `reduce` on the JavaScript side."
+
+    typeError typeList =
+      "Type error in arguments to `"
+      ++ fName
+      ++ "`: expected "
+      ++ typeList
+      ++ "."
+
+  in
+    case fName of
+      "singleton" ->
+        (\x -> [x] |> Encode.list (\a -> a) |> Ok)
+          |> F1
+          |> Ok
+
+      "repeat" ->
+        Wrap.a2 List.repeat (Try.int, Just) (Encode.list (\a -> a)) (typeError "[integer, any]")
+          |> F2
+          |> Ok
+
+      "range" ->
+        Wrap.a2 List.range (Try.int, Try.int) (Encode.list Encode.int) (typeError "[integer, integer]")
+          |> F2
+          |> Ok
+
+      "(::)" ->
+        Wrap.a2 (::) (Just, Try.list) (Encode.list (\a -> a)) (typeError "[any, array]")
+          |> F2
+          |> Ok
+
+      "map" ->
+        Err noFunctionError
+
+      "indexedMap" ->
+        Err noFunctionError
+
+      "foldl" ->
+        Err noFunctionError
+
+      "foldr" ->
+        Err noFunctionError
+
+      "filter" ->
+        Err noFunctionError
+
+      "filterMap" ->
+        Err noFunctionError
+
+      "length" ->
+        Wrap.a1 List.length Try.list Encode.int (typeError "[array]")
+          |> F1
+          |> Ok
+
+      "reverse" ->
+        Wrap.a1 List.reverse Try.list (Encode.list (\a -> a)) (typeError "[array]")
+          |> F1
+          |> Ok
+
+      "member" ->
+        Err noCompareError
+
+      "all" ->
+        Err noCompareError
+
+      "any" ->
+        Err noCompareError
+
+      "maximum" ->
+        Err noCompareError
+
+      "minimum" ->
+        Err noCompareError
+
+      "sum" ->
+        Wrap.a1 List.sum Try.listFloat Encode.float (typeError "[array(number)]")
+          |> F1
+          |> Ok
+
+      "product" ->
+        Wrap.a1 List.product Try.listFloat Encode.float (typeError "[array(number)]")
+          |> F1
+          |> Ok
+
+      "append" ->
+        Wrap.a2 List.append (Try.list, Try.list) (Encode.list (\a -> a)) (typeError "[array, array]")
+          |> F2
+          |> Ok
+
+      "concat" ->
+        Wrap.a1 List.concat Try.listList (Encode.list (\a -> a)) (typeError "[array(array)]")
+          |> F1
+          |> Ok
+
+      "concatMap" ->
+        Err noFunctionError
+
+      "intersperse" ->
+        Wrap.a2 List.intersperse (Just, Try.list) (Encode.list (\a -> a)) (typeError "[any, array]")
+          |> F2
+          |> Ok
+
+      "map2" ->
+        Err noFunctionError
+
+      "map3" ->
+        Err noFunctionError
+
+      "map4" ->
+        Err noFunctionError
+
+      "map5" ->
+        Err noFunctionError
+
+      "sort" ->
+        Err noCompareError
+
+      "sortBy" ->
+        Err noCompareError
+
+      "sortWith" ->
+        Err noCompareError
+
+      "isEmpty" ->
+        Wrap.a1 List.isEmpty Try.list Encode.bool (typeError "[array]")
+          |> F1
+          |> Ok
+
+      "head" ->
+        ( \value ->
+          case (value |> Try.list |> Maybe.withDefault []) of
+            [] ->
+              Err "Can't return the first element of an empty array."
+
+            first :: _ ->
+              Ok first
+
+        )
+          |> F1
+          |> Ok
+
+      "tail" ->
+        ( \value ->
+          case (value |> Try.list |> Maybe.withDefault []) of
+            [] ->
+              Err "Can't partition an empty array."
+
+            _ :: rest ->
+              rest
+                |> Encode.list (\a -> a)
+                |> Ok
+
+        )
+          |> F1
+          |> Ok
+
+      "take" ->
+        Wrap.a2 List.take (Try.int, Try.list) (Encode.list (\a -> a)) (typeError "[integer, array]")
+          |> F2
+          |> Ok
+
+      "drop" ->
+        Wrap.a2 List.drop (Try.int, Try.list) (Encode.list (\a -> a)) (typeError "[integer, array]")
+          |> F2
+          |> Ok
+
+      "partition" ->
+        Err noCompareError
+
+      "unzip" ->
+        Err (
+          "The `unzip` function is not available through this interface "
+          ++ "because tuples are not a data type in JavaScript."
+        )
 
       _ ->
         Err notFoundError

@@ -5,6 +5,12 @@ module Eval.Try exposing
   , float
   , bool
   , list
+  , listString
+  , listInt
+  , listFloat
+  , listBool
+  , listList
+  , listDict
   , dict
   , empty
   , singleton
@@ -52,6 +58,42 @@ list =
     >> Result.toMaybe
 
 
+listString : Value -> Maybe (List String)
+listString =
+  Decode.decodeValue (Decode.list Decode.string)
+    >> Result.toMaybe
+
+
+listInt : Value -> Maybe (List Int)
+listInt =
+  Decode.decodeValue (Decode.list Decode.int)
+    >> Result.toMaybe
+
+
+listFloat : Value -> Maybe (List Float)
+listFloat =
+  Decode.decodeValue (Decode.list Decode.float)
+    >> Result.toMaybe
+
+
+listBool : Value -> Maybe (List Bool)
+listBool =
+  Decode.decodeValue (Decode.list Decode.bool)
+    >> Result.toMaybe
+
+
+listList : Value -> Maybe (List (List Value))
+listList =
+  Decode.decodeValue (Decode.list (Decode.list Decode.value))
+    >> Result.toMaybe
+
+
+listDict : Value -> Maybe (List (Dict String Value))
+listDict =
+  Decode.decodeValue (Decode.list (Decode.dict Decode.value))
+    >> Result.toMaybe
+
+
 dict : Value -> Maybe (Dict String Value)
 dict =
   Decode.decodeValue (Decode.dict Decode.value)
@@ -70,7 +112,7 @@ empty ls =
 singleton : List Value -> Maybe Value
 singleton ls =
   case ls of
-    (first :: []) ->
+    first :: [] ->
       Just first
     _ ->
       Nothing
