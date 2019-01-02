@@ -10,6 +10,8 @@ module Eval.Try exposing
   , listFloat
   , listBool
   , listList
+  , listTuple2
+  , listTuple3
   , listDict
   , dict
   , empty
@@ -21,6 +23,7 @@ module Eval.Try exposing
 
 import Dict exposing (Dict)
 import Json.Decode as Decode exposing (Value)
+import Json.Encode as Encode
 
 
 field : String -> Value -> Maybe Value
@@ -86,6 +89,44 @@ listList : Value -> Maybe (List (List Value))
 listList =
   Decode.decodeValue (Decode.list (Decode.list Decode.value))
     >> Result.toMaybe
+
+
+listTuple2 : Value -> Maybe (List (Value, Value))
+listTuple2 =
+  let
+    resolveMaybes ls =
+      case (ls |> List.member Nothing) of
+        True ->
+          Nothing
+
+        False ->
+          ls
+            |> List.map (Maybe.withDefault (Encode.null, Encode.null))
+            |> Just
+
+  in
+    listList
+      >> Maybe.map (List.map tuple2)
+      >> Maybe.andThen resolveMaybes
+
+
+listTuple3 : Value -> Maybe (List (Value, Value, Value))
+listTuple3 =
+  let
+    resolveMaybes ls =
+      case (ls |> List.member Nothing) of
+        True ->
+          Nothing
+
+        False ->
+          ls
+            |> List.map (Maybe.withDefault (Encode.null, Encode.null, Encode.null))
+            |> Just
+
+  in
+    listList
+      >> Maybe.map (List.map tuple3)
+      >> Maybe.andThen resolveMaybes
 
 
 listDict : Value -> Maybe (List (Dict String Value))

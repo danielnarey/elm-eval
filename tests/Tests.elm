@@ -34,7 +34,7 @@ basics =
         , 2 |> Encode.int
         ]
       }
-        |> Eval.call
+        |> Eval.call Eval.coreLib
         |> Result.withDefault (Encode.null)
         |> Expect.equal (3 |> Encode.int)
     )
@@ -47,7 +47,7 @@ basics =
         , -1 |> Encode.int
         ]
       }
-        |> Eval.call
+        |> Eval.call Eval.coreLib
         |> Result.withDefault (Encode.null)
         |> Expect.equal (-3.25 |> Encode.float)
     )
@@ -60,10 +60,33 @@ basics =
         , 0 |> Encode.int
         ]
       }
-        |> Eval.call
+        |> Eval.call Eval.coreLib
         |> Result.withDefault (Encode.null)
         |> Expect.equal ((-1/0) |> Encode.float)
     )
       |> test "(/) -1 0"
+
+  , ( \() ->
+      { f = "List.unzip"
+      , args =
+        [ [2, 3]
+        , [4, 5]
+        , [6, 7]
+        ]
+          |> List.map (List.map Encode.int >> Encode.list (\x -> x))
+          |> Encode.list (\x -> x)
+          |> List.singleton
+      }
+        |> Eval.call Eval.coreLib
+        |> Result.withDefault (Encode.null)
+        |> Expect.equal (
+          [ [2, 4, 6]
+          , [3, 5, 7]
+          ]
+            |> List.map (List.map Encode.int >> Encode.list (\x -> x))
+            |> Encode.list (\x -> x)
+        )
+    )
+      |> test "List.unzip [ [2, 3], [4, 5], [6, 7] ]"
 
   ]

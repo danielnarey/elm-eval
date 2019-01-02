@@ -1,113 +1,77 @@
 module Eval exposing
-  ( Call
+  ( call
   , parse
-  , call
-  , callFromLib
+  , coreLib
   )
 
 
-{-| Evaluate an Elm function call, given a record with fields for the function
-name (as a string) and a list of arguments (encoded as `Json` values)
+{-| This package provides an infrastructure for parsing and evaluating Elm
+function calls that have been passed in as data through ports.
 
-@docs Call
-@docs parse
 @docs call
-@docs callFromLib
+@docs parse
+@docs coreLib
 -}
 
 
 -- Project
-import Eval.Core as Core
 import Eval.Function exposing (Function(..))
-import Eval.Resolve as Resolve
-import Eval.Try as Try
+import Eval.Call as Call exposing (Call)
+import Eval.Core as Core
+
 -- Core
 import Json.Encode exposing (Value)
 
 
-{-| Represents an Elm function call
+{-| Given an interface to some Elm library, try to execute a `Call` and return
+the result, providing an error message if the function is not found or the
+arguments do not match.
+
+Example with a function from Elm's core libraries:
+
+    { f = "(+)"
+    , args =
+      [ 1 |> Json.Encode.int
+      , 2 |> Json.Encode.int
+      ]
+    }
+      |> Eval.call Eval.coreLib
+
+    --> Ok (Json.Encode.Value 3)
+
+
+Example with a function from a user library called `Greeting` that has a
+function named `hello`:
+
+      { f = "hello"
+      , args = [ "World" |> Json.Encode.string ]
+      }
+        |> Eval.call Greeting.lib
+
+      --> Ok (Json.Encode.Value "Hello, World!")
+
 -}
-type alias Call =
-  { f : String
-  , args : List Value
-  }
+call : (String -> Result String Function) -> Call -> Result String Value
+call =
+  Call.fromLib
 
 
 {-| Parse a `Json` object as a `Call`, resolving errors in the `f` field to an
 empty string and resoving errors in the `args` field to an empty list
+
+    jsObject
+      |> Eval.parse
+      |> Eval.call Eval.coreLib
+
 -}
 parse : Value -> Call
-parse object =
-  { f = object |> Try.field "f" |> Resolve.string
-  , args = object |> Try.field "args" |> Resolve.list
-  }
+parse =
+  Call.parse
 
 
-{-| Try to execute a `Call` and return the result, providing an error message
-if the function is not found or the arguments do not match. This is a shortcut
-to execute calls to functions in Elm's core libraries.
+{-| An interface to Elm's core libraries (can be passed as the first argument
+to `call`)
 -}
-call : Call -> Result String Value
-call =
-  callFromLib Core.lib
-
-
-{-| This generic version of `call` is included to allow the `elm-eval` package
-to be extended by modules that provide access to other libraries of Elm
-functions. See the `Eval.Core` module for implementation details.
--}
-callFromLib : (String -> Result String Function) -> Call -> Result String Value
-callFromLib lib op =
-  case (op.f |> lib) of
-    Ok f ->
-      case f of
-        F0 f0 ->
-          op.args
-            |> Try.empty
-            |> Result.fromMaybe (
-              "The `"
-              ++ op.f
-              ++ "` function expects no arguments, but it got "
-              ++ ( op.args |> List.length |> String.fromInt )
-              ++ "instead."
-            )
-            |> Result.andThen f0
-
-        F1 f1 ->
-          op.args
-            |> Try.singleton
-            |> Result.fromMaybe (
-              "The `"
-              ++ op.f
-              ++ "` function expects 1 argument, but it got "
-              ++ ( op.args |> List.length |> String.fromInt )
-              ++ "instead."
-            )
-            |> Result.andThen f1
-
-        F2 f2 ->
-          op.args
-            |> Try.tuple2
-            |> Result.fromMaybe (
-              "The `"
-              ++ op.f
-              ++ "` function expects 2 arguments, but it got "
-              ++ ( op.args |> List.length |> String.fromInt )
-              ++ "instead."
-            )
-            |> Result.andThen f2
-
-        F3 f3 ->
-          op.args
-            |> Try.tuple3
-            |> Result.fromMaybe (
-              "The `"
-              ++ op.f
-              ++ "` function expects 3 arguments, but it got "
-              ++ ( op.args |> List.length |> String.fromInt )
-              ++ "instead."
-            )
-            |> Result.andThen f3
-
-    Err e ->
-      Err e
+coreLib : String -> Result String Function
+coreLib =
+  Core.lib
