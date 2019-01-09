@@ -3,36 +3,36 @@ module Eval.Core.List exposing
 
 
 -- Project
+import Eval.Core.Error as Error
+import Eval.Encode as Encode
 import Eval.Function exposing (Function(..))
 import Eval.Try as Try
 import Eval.Wrap as Wrap
-import Eval.Core.Error as Error
 
 -- Core
-import Json.Decode exposing (Value)
-import Json.Encode as Encode
+import Json.Encode exposing (Value)
 
 
 lib : String -> Result String Function
 lib fName =
   case fName of
     "singleton" ->
-      (\a -> [a] |> Encode.list (\v -> v) |> Ok)
+      (\a -> [a] |> Encode.list |> Ok)
         |> F1
         |> Ok
 
     "repeat" ->
-      Wrap.a2 List.repeat (Try.int, Just) (Encode.list (\v -> v)) (Error.expected fName "[integer, any]")
+      Wrap.a2 List.repeat (Try.int, Just) Encode.list (Error.expected fName "[integer, any]")
         |> F2
         |> Ok
 
     "range" ->
-      Wrap.a2 List.range (Try.int, Try.int) (Encode.list Encode.int) (Error.expected fName "[integer, integer]")
+      Wrap.a2 List.range (Try.int, Try.int) Encode.listInt (Error.expected fName "[integer, integer]")
         |> F2
         |> Ok
 
     "(::)" ->
-      Wrap.a2 (::) (Just, Try.list) (Encode.list (\v -> v)) (Error.expected fName "[any, array]")
+      Wrap.a2 (::) (Just, Try.list) Encode.list (Error.expected fName "[any, array]")
         |> F2
         |> Ok
 
@@ -60,7 +60,7 @@ lib fName =
         |> Ok
 
     "reverse" ->
-      Wrap.a1 List.reverse Try.list (Encode.list (\v -> v)) (Error.expected fName "[array]")
+      Wrap.a1 List.reverse Try.list Encode.list (Error.expected fName "[array]")
         |> F1
         |> Ok
 
@@ -90,12 +90,12 @@ lib fName =
         |> Ok
 
     "append" ->
-      Wrap.a2 List.append (Try.list, Try.list) (Encode.list (\v -> v)) (Error.expected fName "[array, array]")
+      Wrap.a2 List.append (Try.list, Try.list) Encode.list (Error.expected fName "[array, array]")
         |> F2
         |> Ok
 
     "concat" ->
-      Wrap.a1 List.concat Try.listList (Encode.list (\v -> v)) (Error.expected fName "[array(array)]")
+      Wrap.a1 List.concat Try.listList Encode.list (Error.expected fName "[array(array)]")
         |> F1
         |> Ok
 
@@ -103,7 +103,7 @@ lib fName =
       Err (Error.noFunction fName)
 
     "intersperse" ->
-      Wrap.a2 List.intersperse (Just, Try.list) (Encode.list (\v -> v)) (Error.expected fName "[any, array]")
+      Wrap.a2 List.intersperse (Just, Try.list) Encode.list (Error.expected fName "[any, array]")
         |> F2
         |> Ok
 
@@ -154,7 +154,7 @@ lib fName =
 
           _ :: rest ->
             rest
-              |> Encode.list (\v -> v)
+              |> Encode.list
               |> Ok
 
       )
@@ -162,12 +162,12 @@ lib fName =
         |> Ok
 
     "take" ->
-      Wrap.a2 List.take (Try.int, Try.list) (Encode.list (\v -> v)) (Error.expected fName "[integer, array]")
+      Wrap.a2 List.take (Try.int, Try.list) Encode.list (Error.expected fName "[integer, array]")
         |> F2
         |> Ok
 
     "drop" ->
-      Wrap.a2 List.drop (Try.int, Try.list) (Encode.list (\v -> v)) (Error.expected fName "[integer, array]")
+      Wrap.a2 List.drop (Try.int, Try.list) Encode.list (Error.expected fName "[integer, array]")
         |> F2
         |> Ok
 
@@ -175,7 +175,7 @@ lib fName =
       Err (Error.noCompare fName)
 
     "unzip" ->
-      Wrap.a1 List.unzip Try.listTuple2 (\(a,b) -> [a,b] |> Encode.list (Encode.list (\v -> v))) (Error.expected fName "[array(array-2n)]")
+      Wrap.a1 List.unzip Try.listTuple2 (Encode.tuple2 (Encode.list, Encode.list)) (Error.expected fName "[array(array-2)]")
         |> F1
         |> Ok
 

@@ -9,6 +9,7 @@ module Eval.Call exposing
 import Eval.Function exposing (Function(..))
 import Eval.Resolve as Resolve
 import Eval.Try as Try
+import Eval.Try.List as TryList
 
 -- Core
 import Json.Encode exposing (Value)
@@ -43,49 +44,49 @@ fromLib lib call =
       case f of
         F0 f0 ->
           call.args
-            |> Try.empty
+            |> TryList.empty
             |> Result.fromMaybe (
               "The `"
               ++ call.f
               ++ "` function expects no arguments, but it got "
               ++ ( call.args |> List.length |> String.fromInt )
-              ++ "instead."
+              ++ " instead."
             )
             |> Result.andThen f0
 
         F1 f1 ->
           call.args
-            |> Try.singleton
+            |> TryList.singleton
             |> Result.fromMaybe (
               "The `"
               ++ call.f
               ++ "` function expects 1 argument, but it got "
               ++ ( call.args |> List.length |> String.fromInt )
-              ++ "instead."
+              ++ " instead."
             )
             |> Result.andThen f1
 
         F2 f2 ->
           call.args
-            |> Try.tuple2
+            |> TryList.tuple2
             |> Result.fromMaybe (
               "The `"
               ++ call.f
               ++ "` function expects 2 arguments, but it got "
               ++ ( call.args |> List.length |> String.fromInt )
-              ++ "instead."
+              ++ " instead."
             )
             |> Result.andThen f2
 
         F3 f3 ->
           call.args
-            |> Try.tuple3
+            |> TryList.tuple3
             |> Result.fromMaybe (
               "The `"
               ++ call.f
               ++ "` function expects 3 arguments, but it got "
               ++ ( call.args |> List.length |> String.fromInt )
-              ++ "instead."
+              ++ " instead."
             )
             |> Result.andThen f3
 

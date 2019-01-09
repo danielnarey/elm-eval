@@ -3,14 +3,15 @@ module Eval.Core.Basics exposing
 
 
 -- Project
+import Eval.Core.Error as Error
+import Eval.Core.List
+import Eval.Encode as Encode
 import Eval.Function exposing (Function(..))
 import Eval.Try as Try
 import Eval.Wrap as Wrap
-import Eval.Core.Error as Error
 
 -- Core
-import Json.Decode exposing (Value)
-import Json.Encode as Encode
+import Json.Encode exposing (Value)
 
 
 lib : String -> Result String Function
@@ -216,12 +217,12 @@ lib fName =
         |> Ok
 
     "toPolar" ->
-      Wrap.a2 (\a b -> Basics.toPolar (a,b)) (Try.float, Try.float) (\(a,b) -> [a,b] |> Encode.list Encode.float) (Error.expected fName "[number, number]")
+      Wrap.a2 (\a b -> Basics.toPolar (a,b)) (Try.float, Try.float) (Encode.tuple2 (Encode.float, Encode.float)) (Error.expected fName "[number, number]")
         |> F2
         |> Ok
 
     "fromPolar" ->
-      Wrap.a2 (\a b -> Basics.fromPolar (a,b)) (Try.float, Try.float) (\(a,b) -> [a,b] |> Encode.list Encode.float) (Error.expected fName "[number, number]")
+      Wrap.a2 (\a b -> Basics.fromPolar (a,b)) (Try.float, Try.float) (Encode.tuple2 (Encode.float, Encode.float)) (Error.expected fName "[number, number]")
         |> F2
         |> Ok
 
@@ -256,6 +257,9 @@ lib fName =
 
     "(>>)" ->
       Err (Error.noFunction fName)
+
+    "(::)" ->
+      Eval.Core.List.lib fName
 
     _ ->
       Err (

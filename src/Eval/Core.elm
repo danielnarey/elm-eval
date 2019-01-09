@@ -3,20 +3,16 @@ module Eval.Core exposing
 
 
 -- Project
-import Eval.Function exposing (Function(..))
-import Eval.Try as Try
-import Eval.Wrap as Wrap
-import Eval.Core.Basics
-import Eval.Core.List
 import Eval.Core.Array
+import Eval.Core.Basics
+import Eval.Core.Bitwise
+import Eval.Core.Char
 import Eval.Core.Dict
-
--- Core
-import Array
-import Set
-import Dict exposing (Dict)
-import Json.Decode exposing (Value)
-import Json.Encode as Encode
+import Eval.Core.List
+import Eval.Core.Set
+import Eval.Core.String
+import Eval.Core.Tuple
+import Eval.Function exposing (Function(..))
 
 
 {-| Given the name of a function in the Elm Core library, return an equivalent
@@ -31,27 +27,68 @@ lib expression =
         |> String.split "."
 
     (moduleName, fName) =
-      case (parts |> List.length, parts, parts |> List.drop 1) of
-        (1, first :: rest, []) ->
+      case parts of
+        [] ->
+          ("Basics", "")
+
+        first :: [] ->
           ("Basics", first)
-        (2, first :: rest, second :: []) ->
-          (first, second)
-        (_, _, _) ->
-          ("", "")
+
+        first :: rest ->
+          (first, rest |> String.join ".")
 
   in
     case moduleName of
+      "Array" ->
+        Eval.Core.Array.lib fName
+
       "Basics" ->
         Eval.Core.Basics.lib fName
+
+      "Bitwise" ->
+        Eval.Core.Bitwise.lib fName
+
+      "Char" ->
+        Eval.Core.Char.lib fName
+
+      "Debug" ->
+        Err "The Debug module is not available through this interface."
+
+      "Dict" ->
+        Eval.Core.Dict.lib fName
 
       "List" ->
         Eval.Core.List.lib fName
 
-      "Array" ->
-        Eval.Core.Array.lib fName
+      "Maybe" ->
+        Err "The Maybe module is not available through this interface."
 
-      "Dict" ->
-        Eval.Core.Dict.lib fName
+      "Platform" ->
+        Err "The Platform module is not available through this interface."
+
+      "Platform.Cmd" ->
+        Err "The Platform.Cmd module is not available through this interface."
+
+      "Platform.Sub" ->
+        Err "The Platform.Sub module is not available through this interface."
+
+      "Process" ->
+        Err "The Process module is not available through this interface."
+
+      "Result" ->
+        Err "The Result module is not available through this interface."
+
+      "Set" ->
+        Eval.Core.Set.lib fName
+
+      "String" ->
+        Eval.Core.String.lib fName
+
+      "Task" ->
+        Err "The Task module is not available through this interface."
+
+      "Tuple" ->
+        Eval.Core.Tuple.lib fName
 
       _ ->
         Err (
