@@ -246,6 +246,41 @@ lib fName =
         |> F2
         |> Ok
 
+    "always.string" ->
+      Wrap.a2 Basics.always (Try.string, Try.string) Encode.string (Error.expected fName "[string]")
+        |> F2
+        |> Ok
+
+    "always.char" ->
+      Wrap.a2 Basics.always (Try.char, Try.char) Encode.char (Error.expected fName "[string-1]")
+        |> F2
+        |> Ok
+
+    "always.int" ->
+      Wrap.a2 Basics.always (Try.int, Try.int) Encode.int (Error.expected fName "[integer]")
+        |> F2
+        |> Ok
+
+    "always.float" ->
+      Wrap.a2 Basics.always (Try.float, Try.float) Encode.float (Error.expected fName "[number]")
+        |> F2
+        |> Ok
+
+    "always.list" ->
+      Wrap.a2 Basics.always (Try.list, Try.list) Encode.list (Error.expected fName "[array]")
+        |> F2
+        |> Ok
+
+    "always.array" ->
+      Wrap.a2 Basics.always (Try.array, Try.array) Encode.array (Error.expected fName "[array]")
+        |> F2
+        |> Ok
+
+    "always.dict" ->
+      Wrap.a2 Basics.always (Try.dict, Try.dict) Encode.dict (Error.expected fName "[object]")
+        |> F2
+        |> Ok
+
     "(<|)" ->
       Err (Error.noFunction fName)
 

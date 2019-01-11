@@ -3,7 +3,7 @@
     "name": "visotype/elm-eval",
     "summary": "Pass function calls as data from JavaScript to Elm",
     "license": "BSD-2-Clause",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "exposed-modules": [
         "Eval"
     ],
