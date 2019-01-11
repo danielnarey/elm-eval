@@ -35,7 +35,12 @@ lib expression =
           ("Basics", first)
 
         first :: rest ->
-          (first, rest |> String.join ".")
+          case first of
+            "always" ->
+              ("Basics", expression)
+
+            _ ->
+              (first, rest |> String.join ".")
 
   in
     case moduleName of
